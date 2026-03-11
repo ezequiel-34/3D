@@ -1,5 +1,8 @@
 body{
-
+margin:0;
+overflow:hidden;
+background:black;
+}
 margin:0;
 overflow:hidden;
 background:radial-gradient(circle,#02020a,#000000);
