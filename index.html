@@ -1,268 +1,430 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Particle Hologram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        body {
+            width: 100%;
+            height: 100vh;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-<title>IA Partículas</title>
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+        }
 
-<style>
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+            max-width: 600px;
+            margin: 0 auto;
+            left: 50%;
+            transform: translateX(-50%);
+        }
 
-body{
-margin:0;
-overflow:hidden;
-background:black;
-font-family:Arial;
-}
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #00ffff;
+            background: rgba(0, 20, 40, 0.9);
+            color: #00ffff;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
 
-/* canvas 3D */
-#scene{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-z-index:0;
-}
+        .chat-input:focus {
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+            border-color: #00ffff;
+        }
 
-/* chat */
-#chat{
-position:fixed;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-width:90%;
-max-width:500px;
-display:flex;
-z-index:10;
-}
+        .chat-input::placeholder {
+            color: rgba(0, 255, 255, 0.5);
+        }
 
-#chat input{
-flex:1;
-padding:14px;
-border-radius:25px;
-border:none;
-font-size:16px;
-}
+        .send-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00ffff, #0088ff);
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            font-size: 14px;
+        }
 
-#chat button{
-margin-left:10px;
-padding:14px 20px;
-border:none;
-border-radius:25px;
-background:#00ffff;
-font-weight:bold;
-}
+        .send-button:hover {
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            transform: scale(1.05);
+        }
 
-</style>
+        .send-button:active {
+            transform: scale(0.95);
+        }
 
+        @media (max-width: 768px) {
+            .chat-container {
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+            }
+
+            .chat-input {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .send-button {
+                padding: 10px 24px;
+                font-size: 13px;
+            }
+        }
+    </style>
 </head>
-
 <body>
-
-<canvas id="scene"></canvas>
-
-<div id="chat">
-<input id="texto" placeholder="Escribe algo">
-<button id="btnEnviar">Enviar</button>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
-
-<script>
-
-/* ESCENA */
-
-const canvas = document.getElementById("scene")
-
-const scene = new THREE.Scene()
-
-const camera = new THREE.PerspectiveCamera(
-75,
-window.innerWidth/window.innerHeight,
-0.1,
-1000
-)
-
-camera.position.z = 5
-
-const renderer = new THREE.WebGLRenderer({
-canvas:canvas,
-antialias:true
-})
-
-renderer.setSize(window.innerWidth,window.innerHeight)
-renderer.setClearColor(0x000000)
-
-/* PARTÍCULAS */
-
-const particleCount = 5000
-
-const geometry = new THREE.BufferGeometry()
-
-const positions = new Float32Array(particleCount*3)
-
-const original = []
-
-for(let i=0;i<particleCount;i++){
-
-let r = 2
-
-let theta = Math.random()*Math.PI*2
-let phi = Math.acos((Math.random()*2)-1)
-
-let x = r*Math.sin(phi)*Math.cos(theta)
-let y = r*Math.sin(phi)*Math.sin(theta)
-let z = r*Math.cos(phi)
-
-positions[i*3]=x
-positions[i*3+1]=y
-positions[i*3+2]=z
-
-original.push(x,y,z)
-
-}
-
-geometry.setAttribute(
-"position",
-new THREE.BufferAttribute(positions,3)
-)
-
-const material = new THREE.PointsMaterial({
-color:0x00ffff,
-size:0.04
-})
-
-const particles = new THREE.Points(geometry,material)
-
-scene.add(particles)
-
-/* ROTACIÓN */
-
-let rotX = 0
-let rotY = 0
-
-function animate(){
-
-requestAnimationFrame(animate)
-
-particles.rotation.y += 0.002
-
-renderer.render(scene,camera)
-
-}
-
-animate()
-
-/* BOTÓN ENVIAR */
-
-document.getElementById("btnEnviar").addEventListener("click",function(){
-
-let texto = document.getElementById("texto").value
-
-if(texto==="") return
-
-let palabras = texto.split(" ")
-
-let i=0
-
-function mostrar(){
-
-if(i>=palabras.length){
-
-volverEsfera()
-
-return
-
-}
-
-formarPalabra(palabras[i])
-
-i++
-
-setTimeout(mostrar,1500)
-
-}
-
-mostrar()
-
-})
-
-/* FORMAR PALABRA */
-
-function formarPalabra(word){
-
-let canvas=document.createElement("canvas")
-canvas.width=800
-canvas.height=200
-
-let ctx=canvas.getContext("2d")
-
-ctx.fillStyle="white"
-ctx.font="bold 120px Arial"
-ctx.textAlign="center"
-
-ctx.fillText(word,400,130)
-
-let data=ctx.getImageData(0,0,800,200).data
-
-let pos=particles.geometry.attributes.position.array
-
-let count=0
-
-for(let y=0;y<200;y+=6){
-for(let x=0;x<800;x+=6){
-
-let index=(y*800+x)*4
-
-if(data[index]>200 && count<particleCount){
-
-let i=count*3
-
-pos[i]=(x-400)/100
-pos[i+1]=(100-y)/100
-pos[i+2]=0
-
-count++
-
-}
-
-}
-}
-
-particles.geometry.attributes.position.needsUpdate=true
-
-}
-
-/* VOLVER A ESFERA */
-
-function volverEsfera(){
-
-let pos=particles.geometry.attributes.position.array
-
-for(let i=0;i<particleCount*3;i++){
-
-pos[i]=original[i]
-
-}
-
-particles.geometry.attributes.position.needsUpdate=true
-
-}
-
-/* RESPONSIVE */
-
-window.addEventListener("resize",()=>{
-
-camera.aspect=window.innerWidth/window.innerHeight
-camera.updateProjectionMatrix()
-
-renderer.setSize(window.innerWidth,window.innerHeight)
-
-})
-
-</script>
-
+    <canvas id="canvas"></canvas>
+    <div class="chat-container">
+        <input 
+            type="text" 
+            class="chat-input" 
+            id="chatInput" 
+            placeholder="Escribe algo y presiona Enviar..." 
+            autocomplete="off"
+        >
+        <button class="send-button" id="sendBtn">Enviar</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Configuración de Three.js
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 1);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        
+        camera.position.z = 100;
+
+        // Variables de control
+        let particles = [];
+        let particleGeometry;
+        let particleMesh;
+        let rotation = { x: 0, y: 0 };
+        let targetRotation = { x: 0, y: 0 };
+        let isDragging = false;
+        let isAnimatingText = false;
+        const particleCount = 3000;
+
+        // Crear esfera de partículas
+        function createParticleSphere() {
+            // Limpiar geometría anterior
+            if (particleGeometry) particleGeometry.dispose();
+            if (particleMesh) scene.remove(particleMesh);
+
+            particles = [];
+            const radius = 40;
+
+            // Crear partículas en forma de esfera
+            for (let i = 0; i < particleCount; i++) {
+                const phi = Math.acos(-1 + (2 * i) / particleCount);
+                const theta = Math.sqrt(particleCount * Math.PI) * phi;
+
+                const x = radius * Math.cos(theta) * Math.sin(phi);
+                const y = radius * Math.sin(theta) * Math.sin(phi);
+                const z = radius * Math.cos(phi);
+
+                particles.push({
+                    position: new THREE.Vector3(x, y, z),
+                    originalPosition: new THREE.Vector3(x, y, z),
+                    velocity: new THREE.Vector3(0, 0, 0)
+                });
+            }
+
+            // Crear geometría
+            const positions = new Float32Array(particleCount * 3);
+            particles.forEach((p, i) => {
+                positions[i * 3] = p.position.x;
+                positions[i * 3 + 1] = p.position.y;
+                positions[i * 3 + 2] = p.position.z;
+            });
+
+            particleGeometry = new THREE.BufferGeometry();
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const material = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 0.5,
+                sizeAttenuation: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particleMesh = new THREE.Points(particleGeometry, material);
+            scene.add(particleMesh);
+        }
+
+        // Animar texto con partículas
+        async function animateTextWithParticles(text) {
+            if (isAnimatingText) return;
+            isAnimatingText = true;
+
+            const words = text.trim().split(/\s+/);
+
+            for (const word of words) {
+                await displayWord(word);
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+
+            // Volver a la esfera
+            resetToSphere();
+            isAnimatingText = false;
+        }
+
+        // Mostrar palabra con partículas
+        function displayWord(word) {
+            return new Promise(resolve => {
+                const canvas2d = document.createElement('canvas');
+                canvas2d.width = 512;
+                canvas2d.height = 256;
+                const ctx = canvas2d.getContext('2d');
+
+                ctx.fillStyle = '#00ffff';
+                ctx.font = 'bold 120px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(word, canvas2d.width / 2, canvas2d.height / 2);
+
+                const imageData = ctx.getImageData(0, 0, canvas2d.width, canvas2d.height);
+                const data = imageData.data;
+
+                // Encontrar píxeles con color
+                const wordParticles = [];
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] > 128) { // Alpha > 128
+                        const pixelIndex = i / 4;
+                        const x = (pixelIndex % canvas2d.width) / canvas2d.width * 60 - 30;
+                        const y = (Math.floor(pixelIndex / canvas2d.width) / canvas2d.height) * 30 - 15;
+                        wordParticles.push({ x, y });
+                    }
+                }
+
+                if (wordParticles.length === 0) {
+                    resolve();
+                    return;
+                }
+
+                // Asignar partículas disponibles a las posiciones de las palabras
+                let animationFrames = 0;
+                const animationDuration = 60;
+
+                function animateWordFrame() {
+                    animationFrames++;
+                    const progress = animationFrames / animationDuration;
+
+                    particles.forEach((p, idx) => {
+                        const wordParticle = wordParticles[idx % wordParticles.length];
+                        if (wordParticle) {
+                            p.position.x = p.originalPosition.x * (1 - progress) + wordParticle.x * progress;
+                            p.position.y = p.originalPosition.y * (1 - progress) + wordParticle.y * progress;
+                            p.position.z = p.originalPosition.z * (1 - progress) * 0.5;
+                        }
+                    });
+
+                    updateParticlePositions();
+
+                    if (animationFrames < animationDuration) {
+                        requestAnimationFrame(animateWordFrame);
+                    } else {
+                        // Desvanecerse
+                        let fadeFrames = 0;
+                        const fadeDuration = 30;
+
+                        function fadeWord() {
+                            fadeFrames++;
+                            const fadeProgress = fadeFrames / fadeDuration;
+
+                            if (particleMesh && particleMesh.material) {
+                                particleMesh.material.opacity = 0.8 * (1 - fadeProgress);
+                            }
+
+                            if (fadeFrames < fadeDuration) {
+                                requestAnimationFrame(fadeWord);
+                            } else {
+                                if (particleMesh && particleMesh.material) {
+                                    particleMesh.material.opacity = 0.8;
+                                }
+                                resolve();
+                            }
+                        }
+
+                        fadeWord();
+                    }
+                }
+
+                animateWordFrame();
+            });
+        }
+
+        // Volver a la esfera
+        function resetToSphere() {
+            let resetFrames = 0;
+            const resetDuration = 60;
+
+            function resetFrame() {
+                resetFrames++;
+                const progress = resetFrames / resetDuration;
+                const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease out
+
+                particles.forEach((p) => {
+                    p.position.x = p.position.x * (1 - easeProgress) + p.originalPosition.x * easeProgress;
+                    p.position.y = p.position.y * (1 - easeProgress) + p.originalPosition.y * easeProgress;
+                    p.position.z = p.position.z * (1 - easeProgress) + p.originalPosition.z * easeProgress;
+                });
+
+                updateParticlePositions();
+
+                if (resetFrames < resetDuration) {
+                    requestAnimationFrame(resetFrame);
+                }
+            }
+
+            resetFrame();
+        }
+
+        // Actualizar posiciones de partículas
+        function updateParticlePositions() {
+            if (particleGeometry) {
+                const positions = particleGeometry.attributes.position.array;
+                particles.forEach((p, i) => {
+                    positions[i * 3] = p.position.x;
+                    positions[i * 3 + 1] = p.position.y;
+                    positions[i * 3 + 2] = p.position.z;
+                });
+                particleGeometry.attributes.position.needsUpdate = true;
+            }
+        }
+
+        // Controles de ratón/táctil
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && !isAnimatingText) {
+                targetRotation.y += (e.movementX * 0.01);
+                targetRotation.x += (e.movementY * 0.01);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Controles táctiles
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isAnimatingText) {
+                const deltaX = e.touches[0].clientX - touchStartX;
+                const deltaY = e.touches[0].clientY - touchStartY;
+
+                targetRotation.y += (deltaX * 0.01);
+                targetRotation.x += (deltaY * 0.01);
+
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        });
+
+        // Botón enviar
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+
+            if (text.length > 0 && !isAnimatingText) {
+                animateTextWithParticles(text);
+                input.value = '';
+            }
+        });
+
+        // Enviar con Enter
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('sendBtn').click();
+            }
+        });
+
+        // Animar esfera
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotación suave
+            rotation.x += (targetRotation.x - rotation.x) * 0.1;
+            rotation.y += (targetRotation.y - rotation.y) * 0.1;
+
+            // Auto-rotación cuando no se toca
+            if (!isDragging && !isAnimatingText) {
+                targetRotation.y += 0.0005;
+            }
+
+            if (particleMesh) {
+                particleMesh.rotation.x = rotation.x;
+                particleMesh.rotation.y = rotation.y;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Manejar redimensionamiento
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Inicializar
+        createParticleSphere();
+        animate();
+    </script>
 </body>
 </html>
