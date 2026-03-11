@@ -73,3 +73,92 @@ renderer.render(scene,camera)
 }
 
 animate()
+function sendText(){
+
+let text = document.getElementById("inputText").value
+
+let words = text.split(" ")
+
+let index=0
+
+function nextWord(){
+
+if(index>=words.length){
+
+resetSphere()
+
+return
+
+}
+
+createWord(words[index])
+
+index++
+
+setTimeout(nextWord,2000)
+
+}
+
+nextWord()
+
+}
+function createWord(word){
+
+let canvas=document.createElement("canvas")
+let ctx=canvas.getContext("2d")
+
+canvas.width=1000
+canvas.height=300
+
+ctx.fillStyle="white"
+
+ctx.font="bold 160px Arial"
+
+ctx.textAlign="center"
+
+ctx.fillText(word,500,150)
+
+let data=ctx.getImageData(0,0,1000,300).data
+
+let positions=particles.geometry.attributes.position.array
+
+let count=0
+
+for(let y=0;y<300;y+=6){
+
+for(let x=0;x<1000;x+=6){
+
+let index=(y*1000+x)*4
+
+if(data[index]>150 && count<particleCount){
+
+let i=count*3
+
+positions[i]=(x-500)/100
+positions[i+1]=(150-y)/100
+positions[i+2]=0
+
+count++
+
+}
+
+}
+
+}
+
+particles.geometry.attributes.position.needsUpdate=true
+
+}
+function resetSphere(){
+
+let positions=particles.geometry.attributes.position.array
+
+for(let i=0;i<particleCount*3;i++){
+
+positions[i]=spherePositions[i]
+
+}
+
+particles.geometry.attributes.position.needsUpdate=true
+
+}
